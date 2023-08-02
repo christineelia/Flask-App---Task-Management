@@ -23,11 +23,14 @@ SQLALCHEMY_DATABASE_URI = 'postgresql://your-username:your-password@localhost/yo
 Adjust other configurations (if necessary) such as DEBUG, SQLALCHEMY_TRACK_MODIFICATIONS, etc.
 Initialize the database:
 
-Run the following command to create the necessary tables in the database:
-
-python manage.py db init
-python manage.py db migrate
-python manage.py db upgrade
+Run the following query to create the necessary table in the database:
+CREATE TABLE task (
+    id SERIAL PRIMARY KEY,
+    title TEXT,
+    description TEXT,
+    completed BOOLEAN,
+    due_date DATE DEFAULT CURRENT_DATE + INTERVAL '1 day'
+);
 
 Note: Ensure your PostgreSQL server is running and the database specified in the SQLALCHEMY_DATABASE_URI exists.
 
