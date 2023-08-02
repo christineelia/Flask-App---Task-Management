@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, func
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, text
 from datetime import datetime
 from flask_migrate import Migrate
 
@@ -19,7 +19,7 @@ class Task(db.Model):
     title       = Column(String)
     description = Column(String)
     completed   = Column(Boolean)
-    due_date = Column(DateTime, default=func.current_date() + func.cast('1 day', Integer))
+    due_date = Column(DateTime)
 
 @app.route('/')
 def home():
@@ -50,8 +50,11 @@ def get_tasks():
                 'title': task.title,
                 'description': task.description,
                 'completed': task.completed,
-                'due_date': task.due_date.strftime('%Y-%m-%d'),  # Convert to string for JSON serialization
             }
+            if task.due_date is not None:
+                task_data['due_date'] = task.due_date.strftime('%Y-%m-%d')
+            else:
+                task_data['due_date'] = None
             task_list.append(task_data)
 
         # Create the response dictionary
@@ -84,7 +87,8 @@ def create_task():
             'id': task.id,
             'title': task.title,
             'description': task.description,
-            'completed': task.completed
+            'completed': task.completed,
+            'due_date': task.due_date,
         }
 
         return jsonify(task_data), 201
@@ -107,8 +111,12 @@ def get_task(task_id):
             'title': task.title,
             'description': task.description,
             'completed': task.completed,
-            'due_date': task.due_date.strftime('%Y-%m-%d'),  # Convert to string for JSON serialization
         }
+
+        if task.due_date is not None:
+                task_data['due_date'] = task.due_date.strftime('%Y-%m-%d')
+        else:
+                task_data['due_date'] = None
 
         return jsonify(task_data), 200
     except SQLAlchemyError as e:
