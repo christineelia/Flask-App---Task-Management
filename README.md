@@ -17,27 +17,28 @@ Create and activate a virtual environment (optional but recommended):
 python -m venv venv
 source venv/bin/activate  # On Windows, use 'venv\Scripts\activate'
 
+
 Set the appropriate value for the SQLALCHEMY_DATABASE_URI variable to point to your PostgreSQL database. For example:
 
 SQLALCHEMY_DATABASE_URI = 'postgresql://your-username:your-password@localhost/your-database'
 Adjust other configurations (if necessary) such as DEBUG, SQLALCHEMY_TRACK_MODIFICATIONS, etc.
+
+Run the following:
+pip install flask flask_sqlalchemy flask_migrate
+set FLASK_APP=app.py
+
 Initialize the database:
 
-Run the following query to create the necessary table in the database:
-CREATE TABLE task (
-    id SERIAL PRIMARY KEY,
-    title TEXT,
-    description TEXT,
-    completed BOOLEAN,
-    due_date DATE DEFAULT CURRENT_DATE + INTERVAL '1 day'
-);
+Run the following commands to create the necessary tables in the database:
+flask db migrate
+flask db upgrade
 
 Note: Ensure your PostgreSQL server is running and the database specified in the SQLALCHEMY_DATABASE_URI exists.
 
 Running the Application
 
 To run the Task Management API, use the following command:
-python app.py
+flask run
 
 By default, the application will be accessible at http://127.0.0.1:5000/.
 
@@ -45,6 +46,7 @@ Endpoints
 The Task Management API provides the following endpoints:
 
 GET /tasks: Retrieve a list of all tasks.
+GET /tasks?page=2&per_page=5: Retrieve a list of all tasks with specified pagination.
 GET /tasks/<int:task_id>: Retrieve a specific task by its ID.
 POST /tasks: Create a new task.
 PUT /tasks/<int:task_id>: Update an existing task by its ID.

@@ -19,7 +19,7 @@ class Task(db.Model):
     title       = Column(String)
     description = Column(String)
     completed   = Column(Boolean)
-    due_date    = Column(DateTime, server_default=func.current_date() + func.cast('1 day', Integer))
+    due_date = Column(DateTime, default=func.current_date() + func.cast('1 day', Integer))
 
 @app.route('/')
 def home():
