@@ -3,13 +3,16 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, func
 from datetime import datetime
+from flask_migrate import Migrate
+
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:postgres@localhost/test'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config["DEBUG"] = True
 
-db = SQLAlchemy(app)
+db      = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 class Task(db.Model):
     id          = Column(Integer, primary_key=True)
@@ -22,10 +25,23 @@ class Task(db.Model):
 def home():
     return "Welcome to the Task Management API!"
     
+# Returns list of all tasks    
 @app.route('/tasks', methods=['GET'])
 def get_tasks():
     try:
-        tasks = Task.query.all()
+        # Get the query parameters from the URL
+        page = int(request.args.get('page', 1))  # Default to page 1 if not provided
+        per_page = int(request.args.get('per_page', 10))  # Default to 10 items per page if not provided
+
+        # Calculate the starting index and ending index for the pagination
+        start_index = (page - 1) * per_page
+        end_index = start_index + per_page
+
+        # Query the database for tasks within the pagination range
+        tasks = Task.query.slice(start_index, end_index).all()
+
+        # Get the total number of tasks in the database
+        total_tasks = Task.query.count()
 
         task_list = []
         for task in tasks:
@@ -38,12 +54,20 @@ def get_tasks():
             }
             task_list.append(task_data)
 
-        return jsonify(task_list), 200
+        # Create the response dictionary
+        response = {
+            'tasks': task_list,
+            'total_items': total_tasks,
+            'page': page,
+            'per_page': per_page
+        }
+
+        return jsonify(response), 200
     except SQLAlchemyError as e:
         error_msg = str(e)
         return jsonify({'error': error_msg}), 500
 
-
+# Create a new task
 @app.route('/tasks', methods=['POST'])
 def create_task():
     try:
@@ -70,7 +94,7 @@ def create_task():
         error_msg = str(e)
         return jsonify({'error': error_msg}), 500
 
-
+# Get Task by ID
 @app.route('/tasks/<int:task_id>', methods=['GET'])
 def get_task(task_id):
     try:
@@ -91,7 +115,7 @@ def get_task(task_id):
         error_msg = str(e)
         return jsonify({'error': error_msg}), 500
 
-
+# Update existing task by ID
 @app.route('/tasks/<int:task_id>', methods=['PUT'])
 def update_task(task_id):
     try:
@@ -126,7 +150,7 @@ def update_task(task_id):
         error_msg = str(e)
         return jsonify({'error': error_msg}), 500
 
-
+# Delete Task
 @app.route('/tasks/<int:task_id>', methods=['DELETE'])
 def delete_task(task_id):
     try:
